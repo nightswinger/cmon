@@ -5,6 +5,8 @@ import (
 	"encoding/csv"
 	"os"
 	"strings"
+
+	"github.com/jszwec/csvutil"
 )
 
 type CSV struct {
@@ -78,18 +80,22 @@ func (c *CSV) Write(record []string) error {
 	return err
 }
 
-func ToCSV(record []string) (string, error) {
-	buf := new(bytes.Buffer)
+func ToCSV(data interface{}) (string, error) {
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
 
-	w := csv.NewWriter(buf)
-	err := w.Write(record)
-	if err != nil {
+	enc := csvutil.NewEncoder(w)
+	enc.AutoHeader = false // Headerをつけるかどうか
+	if err := enc.Encode(data); err != nil {
 		return "", err
 	}
 
 	w.Flush()
+	if err := w.Error(); err != nil {
+		return "", err
+	}
 
-	return buf.String(), err
+	return buf.String(), nil
 }
 
 func ParseCSV(record string) ([]string, error) {
